@@ -19,6 +19,8 @@ This repo contains:
   slo-review.md
   sprint-review-deck.md
 /scripts
+  setup-linux.sh
+  setup-macos.sh
   metrics/sample-data.json
   metrics/summarise-metrics.py
   marp/generate-deck.sh
@@ -29,9 +31,21 @@ This repo contains:
 
 ## Quick Start
 
-1) Read `/agents/AGENTS.md`
-2) Pick an example from `/examples`
-3) Run the scripts in `/scripts`
+1) **Bring up Tailscale + OpenClaw**
+
+```bash
+# Linux
+./scripts/setup-linux.sh
+
+# macOS
+./scripts/setup-macos.sh
+```
+
+2) Read `/agents/AGENTS.md`
+3) Pick an example from `/examples`
+4) Run the scripts in `/scripts`
+
+> Tip: set `TAILSCALE_AUTHKEY` to avoid interactive login.
 
 ## License
 
