@@ -1,0 +1,9 @@
+{
+  "requests": [
+    {"id": "REQ-001", "requester": "alice", "type": "access", "handled_days": 2},
+    {"id": "REQ-002", "requester": "bob", "type": "infra", "handled_days": 5},
+    {"id": "REQ-003", "requester": "alice", "type": "access", "handled_days": 1},
+    {"id": "REQ-004", "requester": "carol", "type": "policy", "handled_days": 3},
+    {"id": "REQ-005", "requester": "bob", "type": "infra", "handled_days": 4}
+  ]
+}
