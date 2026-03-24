@@ -45,7 +45,7 @@ This repo contains:
 3) Pick an example from `/examples`
 4) Run the scripts in `/scripts`
 
-> Tip: set `TAILSCALE_AUTHKEY` to avoid interactive login.
+> Tip: set `TAILSCALE_AUTHKEY` to avoid interactive login. Use `TAILSCALE_FUNNEL_PORT=443` to enable Tailscale Funnel.
 
 ## License
 

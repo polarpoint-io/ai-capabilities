@@ -32,6 +32,11 @@ if ! tailscale status >/dev/null 2>&1; then
   fi
 fi
 
+if [[ -n "${TAILSCALE_FUNNEL_PORT:-}" ]]; then
+  echo "==> Enabling Tailscale Funnel on port ${TAILSCALE_FUNNEL_PORT}"
+  sudo tailscale funnel "${TAILSCALE_FUNNEL_PORT}"
+fi
+
 echo "==> Checking OpenClaw"
 if ! command_exists openclaw; then
   echo "OpenClaw CLI not found. Install it first, then re-run this script:"
