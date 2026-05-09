@@ -2,11 +2,16 @@
 
 **Goal:** Generate a review deck from metrics using AGENTS.md.
 
+## Two parts of the review
+- **Platform development** — project‑shaped work (objectives, demos, milestones). Human‑written slides.
+- **BAU and operations** — ticket‑shaped work (request counts, SLA, resolution trends). Agent‑populated slides.
+
 ## Metrics to include
-- Number of requests
-- Time to handle requests
-- Most popular requester
-- Most popular request type
+- Number of requests by category
+- Resolution time trends
+- SLA compliance
+- Top requesting teams
+- Request complexity distribution
 
 ## Output
 - `/scripts/marp/output/sprint-review.md`
