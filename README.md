@@ -24,6 +24,7 @@ This repo contains:
 | `obsidian-vault-processor.md` | Process an Obsidian PARA vault inbox with Claude | [Your Second Brain, Now With an AI Inside It](https://www.polarpoint.io/blog/2026/05/04/your-second-brain-now-with-an-ai-inside-it/) |
 | `mcp-production.md` | MCP gateway: auth, rate limiting, audit logging, injection detection | [MCP in the Real World](https://www.polarpoint.io/blog/2026/04/07/mcp-in-the-real-world-security-permissions-and-operations/) |
 | `holmesgpt-backstage-mcp.md` | HolmesGPT + Backstage Catalog & Scaffolder via TeraSky MCP plugins — service ownership context and time-bound access provisioning | [From Alert to Root Cause: HolmesGPT in Production](https://www.polarpoint.io/blog/2026/04/07/holmesgpt-incident-triage/) |
+| `toolhive-operator.md` | ToolHive Kubernetes operator — MCPServer fleet, VirtualMCPServer aggregation, secret injection, namespace-mode multi-tenancy | [MCP Servers in Kubernetes: The ToolHive Operator](https://www.polarpoint.io/blog/2026/05/15/toolhive-operator/) |
 | `argocd-multi-cluster.md` | Fleet management with ApplicationSet cluster generators | [Multi-Cluster GitOps with ArgoCD](https://www.polarpoint.io/blog/2026/03/02/multi-cluster-gitops-with-argo-cd-the-operational-blueprint/) |
 | `argocd-self-service.md` | Developer self-service with ApplicationSet matrix generators | [GitOps as a Product](https://www.polarpoint.io/blog/2026/03/02/gitops-as-a-product-building-self-service-with-argo-cd/) |
 | `eso-argocd.md` | External Secrets Operator with ArgoCD — SecretStore + ExternalSecret | [External Secrets Operator with ArgoCD](https://www.polarpoint.io/blog/2023/11/30/cloud-native-patterns-why-you-should-use-external-secrets-operator-with-argo-cd/) |
@@ -48,6 +49,7 @@ This repo contains:
 | `scripts/gitops/validate-service.py` | Validate GitOps self-service service definition YAML files |
 | `scripts/gitops/new-service.py` | Generate a new service definition interactively |
 | `scripts/kyverno/summarise-violations.py` | Summarise Kyverno PolicyReport violations across the cluster |
+| `scripts/toolhive/install.sh` | Install the ToolHive operator and deploy a starter MCP fleet (OSV + GitHub MCP servers) |
 
 ## Quick Start
 
