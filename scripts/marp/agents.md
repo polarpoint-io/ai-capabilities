@@ -259,3 +259,184 @@ Steps:
 
 4. Wait for user input and write it into the slide
 ```
+
+---
+
+## Master Agent (Scrum Master / Product Mode): Sprint Health Check
+
+Run this instead of — or after — the platform operations Master Agent when you want the product and delivery view.
+
+```
+You are coordinating the scrum master / product owner section of the sprint review.
+
+Steps:
+1. Calculate @StartDate as today minus 14 days (ISO 8601 format)
+2. Set @AreaPath from configuration block above
+3. Ask the user: "Ready to run the product/scrum health check? (y/n)"
+4. If yes, run agents in this order:
+   - Agent 10: Sprint Goal Assessment
+   - Agent 11: Impediment Summary
+   - Agent 12: Backlog Readiness (next sprint)
+   - Agent 13: Velocity Tracker
+5. After all agents complete, write a 4-line "Sprint Health" summary at the
+   top of the Key Insights slide in deck.md (before the metrics bullets):
+
+   Sprint goal: [met / partially met / not met] — [one sentence why]
+   Velocity: [N points] ([+/-X] vs sprint average)
+   Blockers resolved: [N] open, [N] cleared this sprint
+   Next sprint ready: [N items] meeting Definition of Ready
+
+6. Suggest: "Review the completed deck with: make html"
+```
+
+---
+
+## Agent 10: Sprint Goal Assessment
+
+**Updates:** `deck.md` — Sprint Goal status line in Key Insights slide
+
+```
+Assess whether the sprint goal was achieved based on work item completion.
+
+WIQL — completed items this sprint:
+SELECT [System.Id], [System.Title], [System.State], [System.Tags],
+       [Microsoft.VSTS.Common.ClosedDate]
+FROM WorkItems
+WHERE [System.WorkItemType] IN ('User Story', 'Task', 'Request')
+  AND [System.AreaPath] UNDER '@AreaPath'
+  AND [System.State] IN ('Closed', 'Done', 'Resolved')
+  AND [Microsoft.VSTS.Common.ClosedDate] >= '@StartDate'
+
+WIQL — all committed items (created before sprint start, not closed):
+SELECT [System.Id], [System.Title], [System.State]
+FROM WorkItems
+WHERE [System.WorkItemType] IN ('User Story', 'Task', 'Request')
+  AND [System.AreaPath] UNDER '@AreaPath'
+  AND [System.State] NOT IN ('Closed', 'Done', 'Resolved')
+  AND [System.CreatedDate] < '@StartDate'
+
+Steps:
+1. Run both queries
+2. Calculate: completion rate = closed / (closed + open committed) * 100
+3. Rate the sprint goal:
+   - >= 80% closed → "met"
+   - 50–79% → "partially met"
+   - < 50% → "not met"
+4. Prompt: "What was the sprint goal this sprint?" — accept one sentence from user
+5. Write to Key Insights slide in deck.md:
+   Sprint goal: [status] — [user-provided goal sentence]
+   Completion rate: [N]% ([closed] of [total] items)
+```
+
+---
+
+## Agent 11: Impediment Summary
+
+**Updates:** `deck.md` — Impediments section in Key Insights slide
+
+```
+Surface open blockers and impediments so they can be raised in the review.
+
+WIQL — blocked items (tagged or in a blocked state):
+SELECT [System.Id], [System.Title], [System.State], [System.Tags],
+       [System.AssignedTo], [System.CreatedDate]
+FROM WorkItems
+WHERE [System.AreaPath] UNDER '@AreaPath'
+  AND [System.State] NOT IN ('Closed', 'Done', 'Resolved')
+  AND (
+    [System.Tags] CONTAINS 'blocked'
+    OR [System.Tags] CONTAINS 'impediment'
+    OR [System.BoardLane] = 'Blocked'
+  )
+
+Steps:
+1. Run the WIQL query
+2. Group results:
+   a. Resolved this sprint (closed between @StartDate and today)
+   b. Still open as of today
+3. For open impediments older than 5 days, flag as "escalation candidate"
+4. Write to Key Insights slide in deck.md:
+
+   Impediments:
+   - Cleared this sprint: [N]
+   - Still open: [N] ([list titles of open items, one per line])
+   - Escalation candidates (>5 days open): [titles, assigned to, age in days]
+
+5. If no blocked items found, write: "No open impediments recorded in ADO."
+```
+
+---
+
+## Agent 12: Backlog Readiness
+
+**Updates:** `deck.md` — Next Sprint slide, Readiness section
+
+```
+Check that items planned for next sprint meet the Definition of Ready.
+
+Definition of Ready checklist (adjust to your team's standards):
+  - Has Acceptance Criteria (description field non-empty)
+  - Has Story Points / Effort estimate (not 0 or null)
+  - Is assigned to an area path and iteration
+  - Is not blocked
+
+WIQL — next sprint candidates (items in the backlog, not yet started):
+SELECT [System.Id], [System.Title], [System.State],
+       [Microsoft.VSTS.Scheduling.StoryPoints],
+       [Microsoft.VSTS.Common.AcceptanceCriteria],
+       [System.IterationPath]
+FROM WorkItems
+WHERE [System.WorkItemType] IN ('User Story', 'Feature', 'Request')
+  AND [System.AreaPath] UNDER '@AreaPath'
+  AND [System.State] IN ('New', 'Active', 'Ready')
+  AND [System.IterationPath] NOT UNDER '@CurrentIteration'
+
+Steps:
+1. Run the query
+2. For each item, check each DoR criterion — mark pass/fail
+3. Count: [N] of [total] items meet all DoR criteria
+4. List items failing DoR with specific missing fields
+5. Update the Next Sprint slide in deck.md:
+
+   Backlog readiness:
+   - [N] of [total] items ready for sprint planning
+   - Not ready: [list titles + missing fields]
+
+6. Prompt: "Do you want me to add a comment to the failing items in ADO? (y/n)"
+   If yes, add a comment to each failing item listing the missing fields.
+```
+
+---
+
+## Agent 13: Velocity Tracker
+
+**Updates:** `deck.md` — Operations Overview slide, Velocity row
+
+```
+Calculate sprint velocity and 4-sprint rolling average.
+
+WIQL — completed stories with points, last 4 sprints:
+SELECT [System.Id], [System.IterationPath],
+       [Microsoft.VSTS.Scheduling.StoryPoints],
+       [Microsoft.VSTS.Common.ClosedDate]
+FROM WorkItems
+WHERE [System.WorkItemType] IN ('User Story', 'Task')
+  AND [System.AreaPath] UNDER '@AreaPath'
+  AND [System.State] IN ('Closed', 'Done')
+  AND [Microsoft.VSTS.Common.ClosedDate] >= '@StartDate - 56 days'
+
+Steps:
+1. Run the WIQL query
+2. Group by IterationPath (sprint), sum StoryPoints per sprint
+3. Identify this sprint and the three before it
+4. Calculate:
+   - This sprint velocity: sum of points closed in @CurrentIteration
+   - 4-sprint rolling average: mean of last 4 sprints
+   - Delta vs average: this sprint - rolling average
+5. Update the Operations Overview table in deck.md, adding a Velocity row:
+
+   | Velocity (points) | [this sprint] | [rolling avg] |
+
+6. Write a one-line trend note for the Key Insights slide:
+   Velocity: [N] points ([+/-X] vs 4-sprint avg of [avg])
+```
