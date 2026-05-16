@@ -1,0 +1,14 @@
+@startchart
+title Request Category Distribution
+
+bar "Category" [
+  "Access & Perms" 0,
+  "Pipeline & CI/CD" 0,
+  "Azure Config" 0,
+  "Infra Setup" 0,
+  "APIM" 0,
+  "DR" 0,
+  "Other" 0
+] #3498db labels
+
+@endchart

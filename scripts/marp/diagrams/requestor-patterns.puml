@@ -1,0 +1,12 @@
+@startchart
+title Top Requesting Teams
+
+bar "Team" [
+  "Team A" 0,
+  "Team B" 0,
+  "Team C" 0,
+  "Team D" 0,
+  "Team E" 0
+] #2ecc71 labels
+
+@endchart
