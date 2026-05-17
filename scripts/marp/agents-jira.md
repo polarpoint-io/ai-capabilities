@@ -1,18 +1,22 @@
-# Sprint Review Agents
+# Sprint Review Agents — Jira
 
 ## Configuration
 
 ```yaml
-area_path: "YourOrg\\YourProject\\Platform Engineering"
+project_key: "PLAT"           # Jira project key
+board_id: 42                   # Jira board ID (from board URL)
 sprint_duration_days: 14
-tracker: ado
+tracker: jira
 ```
 
-These values are substituted into every WIQL query via `@AreaPath` and `@StartDate`. Change them once here; all agents pick them up.
+Custom field conventions assumed by these agents (adjust to your Jira instance):
+- Request complexity: `customfield_10100` (values: Simple, Medium, Complex)
+- Requesting team: `customfield_10101`
+- Story points: `customfield_10016` (standard Jira story points field)
 
-> **Note:** This file is the ADO implementation (WIQL queries). The same nine-agent structure is available for other trackers:
-> - GitHub Projects → [`agents-github.md`](agents-github.md)
-> - Jira → [`agents-jira.md`](agents-jira.md)
+These values are substituted into every JQL query. Change them once here; all agents pick them up.
+
+> **Note:** Custom field IDs vary by Jira instance. Run `GET /rest/api/3/field` to list all fields and find the correct IDs for your instance.
 
 ---
 
@@ -22,9 +26,9 @@ These values are substituted into every WIQL query via `@AreaPath` and `@StartDa
 You are coordinating a sprint review deck update.
 
 Steps:
-1. Calculate @StartDate as today minus 14 days (ISO 8601 format)
-2. Set @AreaPath from configuration block above
-3. Ask the user: "Ready to query ADO and update the deck. Proceed? (y/n)"
+1. Calculate @StartDate as today minus 14 days (ISO 8601 format: YYYY-MM-DD)
+2. Set @ProjectKey from the configuration block above
+3. Ask the user: "Ready to query Jira and update the deck. Proceed? (y/n)"
 4. If yes, run agents in this order:
    - Agent 1: Request Counts by Category
    - Agent 2: Resolution Time Trends
@@ -32,7 +36,7 @@ Steps:
    - Agent 4: Request Complexity Distribution
    - Agent 5: Requestor Patterns
    - Agent 6: Request Metrics Summary (arithmetic — runs after 1–5)
-   - Agent 7: Platform Development Summary (template only — no ADO query)
+   - Agent 7: Platform Development Summary (template only — no Jira query)
    - Agent 8: Key Insights (comparative — runs after 6)
    - Agent 9: Next Sprint Objectives (template only — prompts for input)
 5. After all agents complete, report a summary of what was updated
@@ -46,19 +50,22 @@ Steps:
 **Updates:** `diagrams/request-distribution.puml`
 
 ```
-Query ADO for all work items of type 'Request' in the last 14 days.
+Query Jira for all Requests created in the last 14 days.
 
-WIQL:
-SELECT [System.Id], [System.Title], [System.Tags]
-FROM WorkItems
-WHERE [System.WorkItemType] = 'Request'
-  AND [System.AreaPath] UNDER '@AreaPath'
-  AND [System.CreatedDate] >= '@StartDate'
+JQL:
+project = "@ProjectKey"
+  AND issuetype = Request
+  AND created >= "@StartDate"
+ORDER BY created DESC
+
+API call:
+GET /rest/api/3/search?jql=<encoded JQL>&fields=summary,labels,created,status
 
 Steps:
-1. Run the WIQL query
-2. Group results by [System.Tags] (primary tag = category)
-3. Count items per category
+1. Run the JQL query (paginate with maxResults=100 if needed)
+2. Group results by label (first label = category)
+   If no label, group under "Uncategorised"
+3. Count issues per category
 4. Update the bar data array in diagrams/request-distribution.puml:
    Replace each "Category" N line with the new count
 5. Preserve all other lines in the file
@@ -71,20 +78,22 @@ Steps:
 **Updates:** `diagrams/resolution-time-trends.puml`
 
 ```
-Query ADO for completed Requests and calculate daily average resolution time.
+Query Jira for resolved Requests and calculate daily average resolution time.
 
-WIQL:
-SELECT [System.Id], [System.CreatedDate], [Microsoft.VSTS.Common.ClosedDate]
-FROM WorkItems
-WHERE [System.WorkItemType] = 'Request'
-  AND [System.AreaPath] UNDER '@AreaPath'
-  AND [System.State] = 'Closed'
-  AND [System.CreatedDate] >= '@StartDate'
+JQL:
+project = "@ProjectKey"
+  AND issuetype = Request
+  AND status = Done
+  AND created >= "@StartDate"
+ORDER BY created DESC
+
+API call:
+GET /rest/api/3/search?jql=<encoded JQL>&fields=summary,created,resolutiondate
 
 Steps:
-1. Run the WIQL query
-2. For each item, calculate resolution days = ClosedDate - CreatedDate
-3. Group by day (CreatedDate date part), average resolution days per day
+1. Run the JQL query
+2. For each issue, calculate resolution days = resolutiondate - created
+3. Group by day (created date part), average resolution days per day
 4. Update the line chart data points in diagrams/resolution-time-trends.puml
 5. Format dates as DD/MM for the axis labels
 ```
@@ -96,26 +105,28 @@ Steps:
 **Updates:** `deck.md` — "SLA Compliance" table in the Operations Overview slide
 
 ```
-Query ADO for all Requests and check SLA thresholds.
+Query Jira for all Requests and check SLA thresholds.
 
 SLA thresholds (adjust to match your team's targets):
   Simple requests: 2 business days
   Medium requests: 5 business days
   Complex requests: 10 business days
 
-WIQL:
-SELECT [System.Id], [System.CreatedDate], [Microsoft.VSTS.Common.ClosedDate],
-       [Custom.RequestComplexity]
-FROM WorkItems
-WHERE [System.WorkItemType] = 'Request'
-  AND [System.AreaPath] UNDER '@AreaPath'
-  AND [System.CreatedDate] >= '@StartDate'
+JQL:
+project = "@ProjectKey"
+  AND issuetype = Request
+  AND created >= "@StartDate"
+ORDER BY created DESC
+
+API call:
+GET /rest/api/3/search?jql=<encoded JQL>&fields=summary,created,resolutiondate,status,customfield_10100
 
 Steps:
-1. Run the WIQL query
-2. For each closed item, check if resolution time <= threshold for its complexity
-3. Calculate: met_sla / total_closed * 100 = compliance %
-4. Update the SLA row in the Operations Overview table in deck.md
+1. Run the JQL query
+2. For each resolved issue, read customfield_10100 to determine complexity
+3. Check if resolution time (resolutiondate - created) <= SLA threshold
+4. Calculate: met_sla / total_resolved * 100 = compliance %
+5. Update the SLA row in the Operations Overview table in deck.md
 ```
 
 ---
@@ -125,19 +136,22 @@ Steps:
 **Updates:** `diagrams/request-complexity.puml`
 
 ```
-Query ADO for Requests and group by complexity.
+Query Jira for Requests and group by complexity field.
 
-WIQL:
-SELECT [System.Id], [Custom.RequestComplexity]
-FROM WorkItems
-WHERE [System.WorkItemType] = 'Request'
-  AND [System.AreaPath] UNDER '@AreaPath'
-  AND [System.CreatedDate] >= '@StartDate'
+JQL:
+project = "@ProjectKey"
+  AND issuetype = Request
+  AND created >= "@StartDate"
+ORDER BY created DESC
+
+API call:
+GET /rest/api/3/search?jql=<encoded JQL>&fields=customfield_10100
 
 Steps:
-1. Run the WIQL query
-2. Count items with Custom.RequestComplexity = 'Simple', 'Medium', 'Complex'
-3. Update the three bar values in diagrams/request-complexity.puml
+1. Run the JQL query
+2. Count issues where customfield_10100 = Simple, Medium, Complex
+3. Issues with null complexity: group under "Uncategorised"
+4. Update the three bar values in diagrams/request-complexity.puml
 ```
 
 ---
@@ -147,18 +161,20 @@ Steps:
 **Updates:** `diagrams/requestor-patterns.puml`
 
 ```
-Query ADO for all Requests and group by requesting team.
+Query Jira for Requests and group by requesting team.
 
-WIQL:
-SELECT [System.Id], [Custom.RequestedTeamName]
-FROM WorkItems
-WHERE [System.WorkItemType] = 'Request'
-  AND [System.AreaPath] UNDER '@AreaPath'
-  AND [System.CreatedDate] >= '@StartDate'
+JQL:
+project = "@ProjectKey"
+  AND issuetype = Request
+  AND created >= "@StartDate"
+ORDER BY created DESC
+
+API call:
+GET /rest/api/3/search?jql=<encoded JQL>&fields=customfield_10101
 
 Steps:
-1. Run the WIQL query
-2. Group by Custom.RequestedTeamName, count requests per team
+1. Run the JQL query
+2. Group by customfield_10101 (requesting team), count requests per team
 3. Sort descending, take top 5
 4. Update the bar data array in diagrams/requestor-patterns.puml with the top 5
 5. If fewer than 5 teams, fill remaining bars with count 0
@@ -172,7 +188,7 @@ Steps:
 
 ```
 This agent does arithmetic on the data already collected by Agents 1–5.
-No ADO query needed — use the counts from previous agents.
+No Jira query needed — use the counts from previous agents.
 
 Steps:
 1. Sum all category counts from Agent 1 → total requests this sprint
@@ -198,7 +214,7 @@ For 'Previous Sprint' values: read from the existing table before overwriting.
 **Updates:** `deck.md` — Platform Development slide (template prompts only)
 
 ```
-This agent does not query ADO. It outputs a slide template and prompts the
+This agent does not query Jira. It outputs a slide template and prompts the
 team to fill in the narrative sections.
 
 Steps:
@@ -247,7 +263,7 @@ Format:
 **Updates:** `deck.md` — Next Sprint slide
 
 ```
-This agent does not query ADO. It clears the previous sprint's objectives
+This agent does not query Jira. It clears the previous sprint's objectives
 and prompts for the new ones.
 
 Steps:
@@ -275,7 +291,7 @@ You are coordinating the scrum master / product owner section of the sprint revi
 
 Steps:
 1. Calculate @StartDate as today minus 14 days (ISO 8601 format)
-2. Set @AreaPath from configuration block above
+2. Set @ProjectKey and @BoardId from the configuration block above
 3. Ask the user: "Ready to run the product/scrum health check? (y/n)"
 4. If yes, run agents in this order:
    - Agent 10: Sprint Goal Assessment
@@ -300,36 +316,35 @@ Steps:
 **Updates:** `deck.md` — Sprint Goal status line in Key Insights slide
 
 ```
-Assess whether the sprint goal was achieved based on work item completion.
+Assess whether the sprint goal was achieved based on issue completion.
 
-WIQL — completed items this sprint:
-SELECT [System.Id], [System.Title], [System.State], [System.Tags],
-       [Microsoft.VSTS.Common.ClosedDate]
-FROM WorkItems
-WHERE [System.WorkItemType] IN ('User Story', 'Task', 'Request')
-  AND [System.AreaPath] UNDER '@AreaPath'
-  AND [System.State] IN ('Closed', 'Done', 'Resolved')
-  AND [Microsoft.VSTS.Common.ClosedDate] >= '@StartDate'
+JQL — completed issues this sprint:
+project = "@ProjectKey"
+  AND sprint in openSprints()
+  AND status in (Done, Resolved, Closed)
+ORDER BY resolutiondate DESC
 
-WIQL — all committed items (created before sprint start, not closed):
-SELECT [System.Id], [System.Title], [System.State]
-FROM WorkItems
-WHERE [System.WorkItemType] IN ('User Story', 'Task', 'Request')
-  AND [System.AreaPath] UNDER '@AreaPath'
-  AND [System.State] NOT IN ('Closed', 'Done', 'Resolved')
-  AND [System.CreatedDate] < '@StartDate'
+JQL — all committed issues this sprint (including incomplete):
+project = "@ProjectKey"
+  AND sprint in openSprints()
+ORDER BY created ASC
+
+API call:
+GET /rest/agile/1.0/board/@BoardId/sprint?state=active
+GET /rest/agile/1.0/sprint/<sprintId>/issue?jql=<encoded JQL>
 
 Steps:
-1. Run both queries
-2. Calculate: completion rate = closed / (closed + open committed) * 100
-3. Rate the sprint goal:
-   - >= 80% closed → "met"
+1. Fetch current active sprint ID from the board
+2. Run both JQL queries scoped to that sprint
+3. Calculate: completion rate = done / total * 100
+4. Rate the sprint goal:
+   - >= 80% done → "met"
    - 50–79% → "partially met"
    - < 50% → "not met"
-4. Prompt: "What was the sprint goal this sprint?" — accept one sentence from user
-5. Write to Key Insights slide in deck.md:
+5. Prompt: "What was the sprint goal this sprint?" — accept one sentence from user
+6. Write to Key Insights slide in deck.md:
    Sprint goal: [status] — [user-provided goal sentence]
-   Completion rate: [N]% ([closed] of [total] items)
+   Completion rate: [N]% ([done] of [total] issues)
 ```
 
 ---
@@ -341,22 +356,19 @@ Steps:
 ```
 Surface open blockers and impediments so they can be raised in the review.
 
-WIQL — blocked items (tagged or in a blocked state):
-SELECT [System.Id], [System.Title], [System.State], [System.Tags],
-       [System.AssignedTo], [System.CreatedDate]
-FROM WorkItems
-WHERE [System.AreaPath] UNDER '@AreaPath'
-  AND [System.State] NOT IN ('Closed', 'Done', 'Resolved')
-  AND (
-    [System.Tags] CONTAINS 'blocked'
-    OR [System.Tags] CONTAINS 'impediment'
-    OR [System.BoardLane] = 'Blocked'
-  )
+JQL — blocked issues:
+project = "@ProjectKey"
+  AND status != Done
+  AND (labels = blocked OR labels = impediment OR status = Blocked)
+ORDER BY created ASC
+
+API call:
+GET /rest/api/3/search?jql=<encoded JQL>&fields=summary,created,assignee,labels,status
 
 Steps:
-1. Run the WIQL query
+1. Run the JQL query
 2. Group results:
-   a. Resolved this sprint (closed between @StartDate and today)
+   a. Resolved this sprint (resolutiondate >= @StartDate)
    b. Still open as of today
 3. For open impediments older than 5 days, flag as "escalation candidate"
 4. Write to Key Insights slide in deck.md:
@@ -364,9 +376,9 @@ Steps:
    Impediments:
    - Cleared this sprint: [N]
    - Still open: [N] ([list titles of open items, one per line])
-   - Escalation candidates (>5 days open): [titles, assigned to, age in days]
+   - Escalation candidates (>5 days open): [titles, assignee, age in days]
 
-5. If no blocked items found, write: "No open impediments recorded in ADO."
+5. If no blocked issues found, write: "No open impediments recorded in Jira."
 ```
 
 ---
@@ -376,38 +388,36 @@ Steps:
 **Updates:** `deck.md` — Next Sprint slide, Readiness section
 
 ```
-Check that items planned for next sprint meet the Definition of Ready.
+Check that issues planned for next sprint meet the Definition of Ready.
 
 Definition of Ready checklist (adjust to your team's standards):
-  - Has Acceptance Criteria (description field non-empty)
-  - Has Story Points / Effort estimate (not 0 or null)
-  - Is assigned to an area path and iteration
+  - Has a description (non-empty)
+  - Has story points (customfield_10016 not null and > 0)
+  - Is assigned to a sprint (not in Backlog)
   - Is not blocked
 
-WIQL — next sprint candidates (items in the backlog, not yet started):
-SELECT [System.Id], [System.Title], [System.State],
-       [Microsoft.VSTS.Scheduling.StoryPoints],
-       [Microsoft.VSTS.Common.AcceptanceCriteria],
-       [System.IterationPath]
-FROM WorkItems
-WHERE [System.WorkItemType] IN ('User Story', 'Feature', 'Request')
-  AND [System.AreaPath] UNDER '@AreaPath'
-  AND [System.State] IN ('New', 'Active', 'Ready')
-  AND [System.IterationPath] NOT UNDER '@CurrentIteration'
+JQL — next sprint candidates:
+project = "@ProjectKey"
+  AND sprint in futureSprints()
+  AND issuetype in (Story, Task, Request)
+ORDER BY priority DESC
+
+API call:
+GET /rest/api/3/search?jql=<encoded JQL>&fields=summary,description,customfield_10016,assignee,labels,sprint
 
 Steps:
-1. Run the query
-2. For each item, check each DoR criterion — mark pass/fail
-3. Count: [N] of [total] items meet all DoR criteria
-4. List items failing DoR with specific missing fields
+1. Run the JQL query
+2. For each issue, check each DoR criterion — mark pass/fail
+3. Count: [N] of [total] issues meet all DoR criteria
+4. List issues failing DoR with the specific missing fields
 5. Update the Next Sprint slide in deck.md:
 
    Backlog readiness:
-   - [N] of [total] items ready for sprint planning
+   - [N] of [total] issues ready for sprint planning
    - Not ready: [list titles + missing fields]
 
-6. Prompt: "Do you want me to add a comment to the failing items in ADO? (y/n)"
-   If yes, add a comment to each failing item listing the missing fields.
+6. Prompt: "Do you want me to add a comment to the failing issues in Jira? (y/n)"
+   If yes, POST /rest/api/3/issue/<issueId>/comment for each failing issue.
 ```
 
 ---
@@ -419,22 +429,20 @@ Steps:
 ```
 Calculate sprint velocity and 4-sprint rolling average.
 
-WIQL — completed stories with points, last 4 sprints:
-SELECT [System.Id], [System.IterationPath],
-       [Microsoft.VSTS.Scheduling.StoryPoints],
-       [Microsoft.VSTS.Common.ClosedDate]
-FROM WorkItems
-WHERE [System.WorkItemType] IN ('User Story', 'Task')
-  AND [System.AreaPath] UNDER '@AreaPath'
-  AND [System.State] IN ('Closed', 'Done')
-  AND [Microsoft.VSTS.Common.ClosedDate] >= '@StartDate - 56 days'
+API calls:
+GET /rest/agile/1.0/board/@BoardId/sprint?state=closed&maxResults=4
+  → get last 4 closed sprint IDs
+
+For each sprint:
+GET /rest/agile/1.0/sprint/<sprintId>/issue?fields=customfield_10016,status
+  → sum story points for Done issues
 
 Steps:
-1. Run the WIQL query
-2. Group by IterationPath (sprint), sum StoryPoints per sprint
+1. Fetch the last 4 closed sprint IDs from the board
+2. For each sprint, sum customfield_10016 (story points) for issues in status Done
 3. Identify this sprint and the three before it
 4. Calculate:
-   - This sprint velocity: sum of points closed in @CurrentIteration
+   - This sprint velocity: sum of points in current sprint
    - 4-sprint rolling average: mean of last 4 sprints
    - Delta vs average: this sprint - rolling average
 5. Update the Operations Overview table in deck.md, adding a Velocity row:
@@ -443,4 +451,7 @@ Steps:
 
 6. Write a one-line trend note for the Key Insights slide:
    Velocity: [N] points ([+/-X] vs 4-sprint avg of [avg])
+
+Note: If story points aren't used, substitute issue count as a proxy for
+velocity — remove the customfield_10016 field and count issues instead.
 ```

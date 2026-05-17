@@ -1,18 +1,24 @@
-# Sprint Review Agents
+# Sprint Review Agents — GitHub Projects
 
 ## Configuration
 
 ```yaml
-area_path: "YourOrg\\YourProject\\Platform Engineering"
+owner: "YourOrg"
+repo: "your-repo"
+project_number: 1          # GitHub Projects v2 project number
 sprint_duration_days: 14
-tracker: ado
+tracker: github
 ```
 
-These values are substituted into every WIQL query via `@AreaPath` and `@StartDate`. Change them once here; all agents pick them up.
+Label conventions assumed by these agents:
+- Request type/category: `type:infra`, `type:security`, `type:access`, etc.
+- Complexity: `complexity:simple`, `complexity:medium`, `complexity:complex`
+- Requesting team: `team:backend`, `team:data`, `team:frontend`, etc.
+- Blocked: `blocked`, `impediment`
 
-> **Note:** This file is the ADO implementation (WIQL queries). The same nine-agent structure is available for other trackers:
-> - GitHub Projects → [`agents-github.md`](agents-github.md)
-> - Jira → [`agents-jira.md`](agents-jira.md)
+These values are substituted into every GraphQL query via `@Owner`, `@Repo`, and `@StartDate`. Change them once here; all agents pick them up.
+
+> **Note:** GitHub Projects v2 stores custom fields (Points, Complexity, Team) per-project. Adjust field names in each agent to match what you've defined in your project board.
 
 ---
 
@@ -23,8 +29,8 @@ You are coordinating a sprint review deck update.
 
 Steps:
 1. Calculate @StartDate as today minus 14 days (ISO 8601 format)
-2. Set @AreaPath from configuration block above
-3. Ask the user: "Ready to query ADO and update the deck. Proceed? (y/n)"
+2. Set @Owner and @Repo from the configuration block above
+3. Ask the user: "Ready to query GitHub and update the deck. Proceed? (y/n)"
 4. If yes, run agents in this order:
    - Agent 1: Request Counts by Category
    - Agent 2: Resolution Time Trends
@@ -32,7 +38,7 @@ Steps:
    - Agent 4: Request Complexity Distribution
    - Agent 5: Requestor Patterns
    - Agent 6: Request Metrics Summary (arithmetic — runs after 1–5)
-   - Agent 7: Platform Development Summary (template only — no ADO query)
+   - Agent 7: Platform Development Summary (template only — no GitHub query)
    - Agent 8: Key Insights (comparative — runs after 6)
    - Agent 9: Next Sprint Objectives (template only — prompts for input)
 5. After all agents complete, report a summary of what was updated
@@ -46,19 +52,27 @@ Steps:
 **Updates:** `diagrams/request-distribution.puml`
 
 ```
-Query ADO for all work items of type 'Request' in the last 14 days.
+Query GitHub Issues labelled as requests created in the last 14 days.
 
-WIQL:
-SELECT [System.Id], [System.Title], [System.Tags]
-FROM WorkItems
-WHERE [System.WorkItemType] = 'Request'
-  AND [System.AreaPath] UNDER '@AreaPath'
-  AND [System.CreatedDate] >= '@StartDate'
+GraphQL:
+{
+  repository(owner: "@Owner", name: "@Repo") {
+    issues(first: 100, filterBy: { labels: ["request"], since: "@StartDate" }) {
+      nodes {
+        title
+        labels { nodes { name } }
+        createdAt
+        state
+      }
+    }
+  }
+}
 
 Steps:
-1. Run the WIQL query
-2. Group results by [System.Tags] (primary tag = category)
-3. Count items per category
+1. Run the GraphQL query
+2. For each issue, extract the type label (prefix "type:") as the category
+   If no type label, group under "Uncategorised"
+3. Count issues per category
 4. Update the bar data array in diagrams/request-distribution.puml:
    Replace each "Category" N line with the new count
 5. Preserve all other lines in the file
@@ -71,20 +85,24 @@ Steps:
 **Updates:** `diagrams/resolution-time-trends.puml`
 
 ```
-Query ADO for completed Requests and calculate daily average resolution time.
+Query GitHub for closed request issues and calculate daily average resolution time.
 
-WIQL:
-SELECT [System.Id], [System.CreatedDate], [Microsoft.VSTS.Common.ClosedDate]
-FROM WorkItems
-WHERE [System.WorkItemType] = 'Request'
-  AND [System.AreaPath] UNDER '@AreaPath'
-  AND [System.State] = 'Closed'
-  AND [System.CreatedDate] >= '@StartDate'
+GraphQL:
+{
+  repository(owner: "@Owner", name: "@Repo") {
+    issues(first: 100, filterBy: { labels: ["request"], since: "@StartDate" }, states: CLOSED) {
+      nodes {
+        createdAt
+        closedAt
+      }
+    }
+  }
+}
 
 Steps:
-1. Run the WIQL query
-2. For each item, calculate resolution days = ClosedDate - CreatedDate
-3. Group by day (CreatedDate date part), average resolution days per day
+1. Run the GraphQL query
+2. For each issue, calculate resolution days = closedAt - createdAt
+3. Group by day (createdAt date part), average resolution days per day
 4. Update the line chart data points in diagrams/resolution-time-trends.puml
 5. Format dates as DD/MM for the axis labels
 ```
@@ -96,26 +114,33 @@ Steps:
 **Updates:** `deck.md` — "SLA Compliance" table in the Operations Overview slide
 
 ```
-Query ADO for all Requests and check SLA thresholds.
+Query GitHub for all request issues and check SLA thresholds.
 
 SLA thresholds (adjust to match your team's targets):
-  Simple requests: 2 business days
-  Medium requests: 5 business days
-  Complex requests: 10 business days
+  Simple requests (complexity:simple): 2 business days
+  Medium requests (complexity:medium): 5 business days
+  Complex requests (complexity:complex): 10 business days
 
-WIQL:
-SELECT [System.Id], [System.CreatedDate], [Microsoft.VSTS.Common.ClosedDate],
-       [Custom.RequestComplexity]
-FROM WorkItems
-WHERE [System.WorkItemType] = 'Request'
-  AND [System.AreaPath] UNDER '@AreaPath'
-  AND [System.CreatedDate] >= '@StartDate'
+GraphQL:
+{
+  repository(owner: "@Owner", name: "@Repo") {
+    issues(first: 100, filterBy: { labels: ["request"], since: "@StartDate" }) {
+      nodes {
+        labels { nodes { name } }
+        createdAt
+        closedAt
+        state
+      }
+    }
+  }
+}
 
 Steps:
-1. Run the WIQL query
-2. For each closed item, check if resolution time <= threshold for its complexity
-3. Calculate: met_sla / total_closed * 100 = compliance %
-4. Update the SLA row in the Operations Overview table in deck.md
+1. Run the GraphQL query
+2. For each closed issue, read the complexity label to determine the SLA threshold
+3. Check if resolution time (closedAt - createdAt) <= threshold
+4. Calculate: met_sla / total_closed * 100 = compliance %
+5. Update the SLA row in the Operations Overview table in deck.md
 ```
 
 ---
@@ -125,19 +150,24 @@ Steps:
 **Updates:** `diagrams/request-complexity.puml`
 
 ```
-Query ADO for Requests and group by complexity.
+Query GitHub for request issues and group by complexity label.
 
-WIQL:
-SELECT [System.Id], [Custom.RequestComplexity]
-FROM WorkItems
-WHERE [System.WorkItemType] = 'Request'
-  AND [System.AreaPath] UNDER '@AreaPath'
-  AND [System.CreatedDate] >= '@StartDate'
+GraphQL:
+{
+  repository(owner: "@Owner", name: "@Repo") {
+    issues(first: 100, filterBy: { labels: ["request"], since: "@StartDate" }) {
+      nodes {
+        labels { nodes { name } }
+      }
+    }
+  }
+}
 
 Steps:
-1. Run the WIQL query
-2. Count items with Custom.RequestComplexity = 'Simple', 'Medium', 'Complex'
-3. Update the three bar values in diagrams/request-complexity.puml
+1. Run the GraphQL query
+2. Count issues with label complexity:simple, complexity:medium, complexity:complex
+3. Issues with no complexity label: group under "Uncategorised"
+4. Update the three bar values in diagrams/request-complexity.puml
 ```
 
 ---
@@ -147,19 +177,24 @@ Steps:
 **Updates:** `diagrams/requestor-patterns.puml`
 
 ```
-Query ADO for all Requests and group by requesting team.
+Query GitHub for request issues and group by requesting team label.
 
-WIQL:
-SELECT [System.Id], [Custom.RequestedTeamName]
-FROM WorkItems
-WHERE [System.WorkItemType] = 'Request'
-  AND [System.AreaPath] UNDER '@AreaPath'
-  AND [System.CreatedDate] >= '@StartDate'
+GraphQL:
+{
+  repository(owner: "@Owner", name: "@Repo") {
+    issues(first: 100, filterBy: { labels: ["request"], since: "@StartDate" }) {
+      nodes {
+        labels { nodes { name } }
+      }
+    }
+  }
+}
 
 Steps:
-1. Run the WIQL query
-2. Group by Custom.RequestedTeamName, count requests per team
-3. Sort descending, take top 5
+1. Run the GraphQL query
+2. For each issue, extract the team label (prefix "team:") as the requestor
+   If no team label, group under "Unknown"
+3. Count requests per team, sort descending, take top 5
 4. Update the bar data array in diagrams/requestor-patterns.puml with the top 5
 5. If fewer than 5 teams, fill remaining bars with count 0
 ```
@@ -172,7 +207,7 @@ Steps:
 
 ```
 This agent does arithmetic on the data already collected by Agents 1–5.
-No ADO query needed — use the counts from previous agents.
+No GitHub query needed — use the counts from previous agents.
 
 Steps:
 1. Sum all category counts from Agent 1 → total requests this sprint
@@ -198,7 +233,7 @@ For 'Previous Sprint' values: read from the existing table before overwriting.
 **Updates:** `deck.md` — Platform Development slide (template prompts only)
 
 ```
-This agent does not query ADO. It outputs a slide template and prompts the
+This agent does not query GitHub. It outputs a slide template and prompts the
 team to fill in the narrative sections.
 
 Steps:
@@ -247,7 +282,7 @@ Format:
 **Updates:** `deck.md` — Next Sprint slide
 
 ```
-This agent does not query ADO. It clears the previous sprint's objectives
+This agent does not query GitHub. It clears the previous sprint's objectives
 and prompts for the new ones.
 
 Steps:
@@ -275,7 +310,7 @@ You are coordinating the scrum master / product owner section of the sprint revi
 
 Steps:
 1. Calculate @StartDate as today minus 14 days (ISO 8601 format)
-2. Set @AreaPath from configuration block above
+2. Set @Owner and @Repo from the configuration block above
 3. Ask the user: "Ready to run the product/scrum health check? (y/n)"
 4. If yes, run agents in this order:
    - Agent 10: Sprint Goal Assessment
@@ -300,28 +335,38 @@ Steps:
 **Updates:** `deck.md` — Sprint Goal status line in Key Insights slide
 
 ```
-Assess whether the sprint goal was achieved based on work item completion.
+Assess whether the sprint goal was achieved based on issue completion.
 
-WIQL — completed items this sprint:
-SELECT [System.Id], [System.Title], [System.State], [System.Tags],
-       [Microsoft.VSTS.Common.ClosedDate]
-FROM WorkItems
-WHERE [System.WorkItemType] IN ('User Story', 'Task', 'Request')
-  AND [System.AreaPath] UNDER '@AreaPath'
-  AND [System.State] IN ('Closed', 'Done', 'Resolved')
-  AND [Microsoft.VSTS.Common.ClosedDate] >= '@StartDate'
+GraphQL — closed issues this sprint:
+{
+  repository(owner: "@Owner", name: "@Repo") {
+    issues(first: 100, filterBy: { since: "@StartDate" }, states: CLOSED) {
+      nodes {
+        title
+        closedAt
+        labels { nodes { name } }
+        milestone { title }
+      }
+    }
+  }
+}
 
-WIQL — all committed items (created before sprint start, not closed):
-SELECT [System.Id], [System.Title], [System.State]
-FROM WorkItems
-WHERE [System.WorkItemType] IN ('User Story', 'Task', 'Request')
-  AND [System.AreaPath] UNDER '@AreaPath'
-  AND [System.State] NOT IN ('Closed', 'Done', 'Resolved')
-  AND [System.CreatedDate] < '@StartDate'
+GraphQL — open issues (committed but not closed):
+{
+  repository(owner: "@Owner", name: "@Repo") {
+    issues(first: 100, filterBy: { since: "@StartDate" }, states: OPEN) {
+      nodes {
+        title
+        labels { nodes { name } }
+        milestone { title }
+      }
+    }
+  }
+}
 
 Steps:
-1. Run both queries
-2. Calculate: completion rate = closed / (closed + open committed) * 100
+1. Run both queries, filter to issues in the current sprint milestone
+2. Calculate: completion rate = closed / (closed + open) * 100
 3. Rate the sprint goal:
    - >= 80% closed → "met"
    - 50–79% → "partially met"
@@ -329,7 +374,7 @@ Steps:
 4. Prompt: "What was the sprint goal this sprint?" — accept one sentence from user
 5. Write to Key Insights slide in deck.md:
    Sprint goal: [status] — [user-provided goal sentence]
-   Completion rate: [N]% ([closed] of [total] items)
+   Completion rate: [N]% ([closed] of [total] issues)
 ```
 
 ---
@@ -341,20 +386,22 @@ Steps:
 ```
 Surface open blockers and impediments so they can be raised in the review.
 
-WIQL — blocked items (tagged or in a blocked state):
-SELECT [System.Id], [System.Title], [System.State], [System.Tags],
-       [System.AssignedTo], [System.CreatedDate]
-FROM WorkItems
-WHERE [System.AreaPath] UNDER '@AreaPath'
-  AND [System.State] NOT IN ('Closed', 'Done', 'Resolved')
-  AND (
-    [System.Tags] CONTAINS 'blocked'
-    OR [System.Tags] CONTAINS 'impediment'
-    OR [System.BoardLane] = 'Blocked'
-  )
+GraphQL — blocked issues:
+{
+  repository(owner: "@Owner", name: "@Repo") {
+    issues(first: 100, filterBy: { labels: ["blocked"] }, states: OPEN) {
+      nodes {
+        title
+        createdAt
+        assignees { nodes { login } }
+        labels { nodes { name } }
+      }
+    }
+  }
+}
 
 Steps:
-1. Run the WIQL query
+1. Run the GraphQL query
 2. Group results:
    a. Resolved this sprint (closed between @StartDate and today)
    b. Still open as of today
@@ -366,7 +413,7 @@ Steps:
    - Still open: [N] ([list titles of open items, one per line])
    - Escalation candidates (>5 days open): [titles, assigned to, age in days]
 
-5. If no blocked items found, write: "No open impediments recorded in ADO."
+5. If no blocked issues found, write: "No open impediments recorded in GitHub."
 ```
 
 ---
@@ -376,38 +423,48 @@ Steps:
 **Updates:** `deck.md` — Next Sprint slide, Readiness section
 
 ```
-Check that items planned for next sprint meet the Definition of Ready.
+Check that issues planned for next sprint meet the Definition of Ready.
 
 Definition of Ready checklist (adjust to your team's standards):
-  - Has Acceptance Criteria (description field non-empty)
-  - Has Story Points / Effort estimate (not 0 or null)
-  - Is assigned to an area path and iteration
-  - Is not blocked
+  - Has a body / description (non-empty)
+  - Has a Points or Estimate project field value (not 0 or null)
+  - Is assigned to a milestone
+  - Is not labelled "blocked"
 
-WIQL — next sprint candidates (items in the backlog, not yet started):
-SELECT [System.Id], [System.Title], [System.State],
-       [Microsoft.VSTS.Scheduling.StoryPoints],
-       [Microsoft.VSTS.Common.AcceptanceCriteria],
-       [System.IterationPath]
-FROM WorkItems
-WHERE [System.WorkItemType] IN ('User Story', 'Feature', 'Request')
-  AND [System.AreaPath] UNDER '@AreaPath'
-  AND [System.State] IN ('New', 'Active', 'Ready')
-  AND [System.IterationPath] NOT UNDER '@CurrentIteration'
+GraphQL — next sprint candidates (open issues in next milestone):
+{
+  repository(owner: "@Owner", name: "@Repo") {
+    milestones(first: 5, orderBy: { field: DUE_DATE, direction: ASC }) {
+      nodes {
+        title
+        dueOn
+        issues(first: 50, states: OPEN) {
+          nodes {
+            title
+            body
+            assignees { nodes { login } }
+            labels { nodes { name } }
+            milestone { title }
+          }
+        }
+      }
+    }
+  }
+}
 
 Steps:
-1. Run the query
-2. For each item, check each DoR criterion — mark pass/fail
-3. Count: [N] of [total] items meet all DoR criteria
-4. List items failing DoR with specific missing fields
+1. Run the query, select the next-upcoming milestone
+2. For each issue, check each DoR criterion — mark pass/fail
+3. Count: [N] of [total] issues meet all DoR criteria
+4. List issues failing DoR with the specific missing fields
 5. Update the Next Sprint slide in deck.md:
 
    Backlog readiness:
-   - [N] of [total] items ready for sprint planning
+   - [N] of [total] issues ready for sprint planning
    - Not ready: [list titles + missing fields]
 
-6. Prompt: "Do you want me to add a comment to the failing items in ADO? (y/n)"
-   If yes, add a comment to each failing item listing the missing fields.
+6. Prompt: "Do you want me to add a comment to the failing issues in GitHub? (y/n)"
+   If yes, add a comment to each failing issue listing the missing fields.
 ```
 
 ---
@@ -417,25 +474,38 @@ Steps:
 **Updates:** `deck.md` — Operations Overview slide, Velocity row
 
 ```
-Calculate sprint velocity and 4-sprint rolling average.
+Calculate sprint velocity and 4-sprint rolling average using GitHub milestone data.
 
-WIQL — completed stories with points, last 4 sprints:
-SELECT [System.Id], [System.IterationPath],
-       [Microsoft.VSTS.Scheduling.StoryPoints],
-       [Microsoft.VSTS.Common.ClosedDate]
-FROM WorkItems
-WHERE [System.WorkItemType] IN ('User Story', 'Task')
-  AND [System.AreaPath] UNDER '@AreaPath'
-  AND [System.State] IN ('Closed', 'Done')
-  AND [Microsoft.VSTS.Common.ClosedDate] >= '@StartDate - 56 days'
+GraphQL — closed issues with Points field, last 4 milestones:
+{
+  repository(owner: "@Owner", name: "@Repo") {
+    milestones(last: 4, states: CLOSED) {
+      nodes {
+        title
+        issues(first: 100, states: CLOSED) {
+          nodes {
+            title
+            projectItems(first: 1) {
+              nodes {
+                fieldValueByName(name: "Points") {
+                  ... on ProjectV2ItemFieldNumberValue { number }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
 Steps:
-1. Run the WIQL query
-2. Group by IterationPath (sprint), sum StoryPoints per sprint
+1. Run the GraphQL query
+2. For each milestone, sum the Points field values across closed issues
 3. Identify this sprint and the three before it
 4. Calculate:
-   - This sprint velocity: sum of points closed in @CurrentIteration
-   - 4-sprint rolling average: mean of last 4 sprints
+   - This sprint velocity: sum of points in current milestone
+   - 4-sprint rolling average: mean of last 4 milestones
    - Delta vs average: this sprint - rolling average
 5. Update the Operations Overview table in deck.md, adding a Velocity row:
 
@@ -443,4 +513,7 @@ Steps:
 
 6. Write a one-line trend note for the Key Insights slide:
    Velocity: [N] points ([+/-X] vs 4-sprint avg of [avg])
+
+Note: If your project doesn't use a Points field, substitute issue count as a
+proxy for velocity — adjust the query to remove the projectItems field lookup.
 ```
