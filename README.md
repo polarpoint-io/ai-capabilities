@@ -31,6 +31,8 @@ This repo contains:
 | `kyverno-policies.md` | Kyverno ClusterPolicies synced via ArgoCD — validate, mutate, generate | [GitOps Policy-as-Code with Kyverno](https://www.polarpoint.io/blog/2026/04/07/gitops-policy-as-code-with-argo-cd-kyverno/) |
 | `gemma-edge-agent.md` | Gemma 4 agentic workloads running locally via Ollama | [Gemma 4 at the Edge](https://www.polarpoint.io/blog/2026/04/07/gemma-4-at-the-edge-agentic-skills-in-production/) |
 
+| karpathy-claude-md.md | AGENTS.md routing map with Tier 1/2/3 approval model and platform engineering extensions to Karpathy's CLAUDE.md rules | The Four Rules That Make AI Agents Actually Trustworthy |
+
 ## Scripts
 
 | Script | What it does |
