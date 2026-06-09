@@ -17,10 +17,36 @@ for (let i = 0; i < args.length; i++) {
   if (args[i] === '--schema' && args[i + 1]) { schemaArg = args[++i]; continue; }
   if (args[i] === '--file'   && args[i + 1]) { fileArg   = args[++i]; continue; }
   if (args[i] === '--strict')                { strict = true;          continue; }
+  if (args[i] === '--version' || args[i] === '-v') {
+    const pkg = require('../package.json');
+    console.log(pkg.version);
+    process.exit(0);
+  }
+  if (args[i] === '--help' || args[i] === '-h') {
+    console.log(`
+Usage: agentsmd-validator --file <path> [--schema <url|path>] [--strict]
+
+Options:
+  --file <path>      Path to AGENTS.md file to validate (required)
+  --schema <url>     URL or path to schema.json for drift detection (optional)
+  --strict           Treat warnings as errors (non-zero exit code)
+  --version, -v      Print version
+  --help, -h         Print this help
+
+Examples:
+  npx @polarpoint/agentsmd-validator --file AGENTS.md
+  npx @polarpoint/agentsmd-validator \\
+    --file AGENTS.md \\
+    --schema https://raw.githubusercontent.com/your-org/platform-standards/main/schema.json
+`);
+    process.exit(0);
+  }
 }
 
 if (!fileArg) {
+  console.error('Error: --file is required\n');
   console.error('Usage: agentsmd-validator --file <path> [--schema <url|path>] [--strict]');
+  console.error('       agentsmd-validator --help');
   process.exit(1);
 }
 
@@ -31,6 +57,9 @@ function fetchUrl(url) {
     client.get(url, res => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         return fetchUrl(res.headers.location).then(resolve).catch(reject);
+      }
+      if (res.statusCode !== 200) {
+        return reject(new Error(`HTTP ${res.statusCode} fetching ${url}`));
       }
       let data = '';
       res.on('data', chunk => { data += chunk; });

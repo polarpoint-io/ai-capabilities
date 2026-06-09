@@ -6,13 +6,31 @@
   "bin": {
     "agentsmd-validator": "./bin/agentsmd-validator.js"
   },
+  "files": [
+    "bin/",
+    "lib/",
+    "README.md"
+  ],
   "scripts": {
-    "test": "node test/validator.test.js"
+    "prepublishOnly": "node bin/agentsmd-validator.js --file bin/agentsmd-validator.js 2>/dev/null || true"
   },
-  "keywords": ["agents", "ai", "validation", "platform-engineering", "gitops"],
-  "author": "Polarpoint",
+  "keywords": ["agents", "ai", "validation", "platform-engineering", "gitops", "agentsmd"],
+  "author": "Polarpoint <hello@polarpoint.io>",
   "license": "MIT",
   "engines": {
     "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/polarpoint-io/ai-capabilities.git",
+    "directory": "agentsmd-validator"
+  },
+  "homepage": "https://github.com/polarpoint-io/ai-capabilities/tree/main/agentsmd-validator#readme",
+  "bugs": {
+    "url": "https://github.com/polarpoint-io/ai-capabilities/issues"
   }
 }

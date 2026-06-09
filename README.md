@@ -1,11 +1,56 @@
 # AI Capabilities
 
+![ai-capabilities](./ai-capabilities-hero.png)
+
 Companion repository for the [Polarpoint blog](https://www.polarpoint.io/blog/) series on AI-assisted platform engineering.
 
 This repo contains:
+- Installable CLI tools for managing AI agents at scale
+- Platform standards templates and schema
 - Example `AGENTS.md` patterns for platform workflows
 - Sample scripts to collect metrics and generate outputs
 - Walkthrough examples you can run locally
+
+---
+
+## Tools
+
+### [`agentsmd-validator`](./agentsmd-validator) · [![npm](https://img.shields.io/npm/v/@polarpoint/agentsmd-validator)](https://www.npmjs.com/package/@polarpoint/agentsmd-validator)
+
+Zero-dependency Node.js CLI that validates zone-structured `AGENTS.md` files against a schema. Checks zone markers, required sections, executable commands in test instructions, and Zone 1 drift.
+
+```bash
+npx @polarpoint/agentsmd-validator --file AGENTS.md
+npx @polarpoint/agentsmd-validator \
+  --file AGENTS.md \
+  --schema https://raw.githubusercontent.com/your-org/platform-standards/main/schema.json
+```
+
+### [`drift-detector`](./drift-detector)
+
+Pure-stdlib Python script that scans a GitHub org and reports which repos have Zone 1 content that has drifted from the platform standard.
+
+```bash
+python drift-detector/detect-drift.py \
+  --org your-org \
+  --token $GITHUB_TOKEN \
+  --schema https://raw.githubusercontent.com/your-org/platform-standards/main/schema.json
+```
+
+### [`platform-standards`](./platform-standards)
+
+Default three-zone `AGENTS.md` template and `schema.json` for use as the source of truth in your platform-standards repo.
+
+---
+
+## Templates
+
+| Template | What it covers |
+|----------|---------------|
+| `templates/CLAUDE.md` | AGENTS.md routing map with Tier 1/2/3 approval model and platform engineering extensions to Karpathy's CLAUDE.md rules |
+| `templates/github-issue-agent-task.md` | Structured GitHub issue template for agent task delegation |
+
+---
 
 ## Examples
 
@@ -30,8 +75,9 @@ This repo contains:
 | `eso-argocd.md` | External Secrets Operator with ArgoCD — SecretStore + ExternalSecret | [External Secrets Operator with ArgoCD](https://www.polarpoint.io/blog/2023/11/30/cloud-native-patterns-why-you-should-use-external-secrets-operator-with-argo-cd/) |
 | `kyverno-policies.md` | Kyverno ClusterPolicies synced via ArgoCD — validate, mutate, generate | [GitOps Policy-as-Code with Kyverno](https://www.polarpoint.io/blog/2026/04/07/gitops-policy-as-code-with-argo-cd-kyverno/) |
 | `gemma-edge-agent.md` | Gemma 4 agentic workloads running locally via Ollama | [Gemma 4 at the Edge](https://www.polarpoint.io/blog/2026/04/07/gemma-4-at-the-edge-agentic-skills-in-production/) |
+| `karpathy-claude-md.md` | AGENTS.md routing map with Tier 1/2/3 approval model and platform engineering extensions to Karpathy's CLAUDE.md rules | [The Four Rules That Make AI Agents Actually Trustworthy](https://www.polarpoint.io/blog/) |
 
-| karpathy-claude-md.md | AGENTS.md routing map with Tier 1/2/3 approval model and platform engineering extensions to Karpathy's CLAUDE.md rules | The Four Rules That Make AI Agents Actually Trustworthy |
+---
 
 ## Scripts
 
@@ -52,6 +98,8 @@ This repo contains:
 | `scripts/gitops/new-service.py` | Generate a new service definition interactively |
 | `scripts/kyverno/summarise-violations.py` | Summarise Kyverno PolicyReport violations across the cluster |
 | `scripts/toolhive/install.sh` | Install the ToolHive operator and deploy a starter MCP fleet (OSV + GitHub MCP servers) |
+
+---
 
 ## Quick Start
 
@@ -95,6 +143,8 @@ python scripts/classify-drift.py my-app /tmp/drift-my-app.diff
 ```
 
 > Tip: set `TAILSCALE_AUTHKEY` to avoid interactive login when using OpenClaw. Use `TAILSCALE_FUNNEL_PORT=443` to enable Tailscale Funnel.
+
+---
 
 ## License
 
