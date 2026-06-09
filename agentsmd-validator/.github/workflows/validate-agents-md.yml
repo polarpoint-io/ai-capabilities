@@ -1,0 +1,24 @@
+name: Validate AGENTS.md
+
+on:
+  pull_request:
+    paths:
+      - 'AGENTS.md'
+      - '.github/AGENTS.md'
+  push:
+    branches: [main]
+    paths:
+      - 'AGENTS.md'
+      - '.github/AGENTS.md'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate AGENTS.md
+        run: |
+          npx --yes @polarpoint/agentsmd-validator \
+            --schema https://raw.githubusercontent.com/your-org/platform-standards/main/schema.json \
+            --file AGENTS.md

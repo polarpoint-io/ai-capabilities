@@ -1,0 +1,18 @@
+{
+  "name": "@polarpoint/agentsmd-validator",
+  "version": "1.0.0",
+  "description": "Validate AGENTS.md files against a zone-structured schema",
+  "main": "lib/validator.js",
+  "bin": {
+    "agentsmd-validator": "./bin/agentsmd-validator.js"
+  },
+  "scripts": {
+    "test": "node test/validator.test.js"
+  },
+  "keywords": ["agents", "ai", "validation", "platform-engineering", "gitops"],
+  "author": "Polarpoint",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "_comment": "Regenerate zone1Hash after editing the template: node -e \"const c=require('crypto'),f=require('fs'),z=f.readFileSync('templates/default-agents-md.md','utf8').match(/zone:1:start[\\s\\S]*?zone:1:end/)[0];console.log(c.createHash('sha256').update(z.replace(/\\s+/g,' ').trim()).digest('hex').slice(0,16))\"",
+  "templateVersion": "1.0.0",
+  "zone1Hash": "98dfe660cbdaf240",
+  "requiredSections": [
+    "Sync model",
+    "Forbidden paths",
+    "Naming conventions",
+    "Running tests"
+  ],
+  "zoneMarkers": {
+    "zone1Start": "<!-- zone:1:start -->",
+    "zone1End":   "<!-- zone:1:end -->",
+    "zone2Start": "<!-- zone:2:start -->",
+    "zone2End":   "<!-- zone:2:end -->",
+    "zone3Start": "<!-- zone:3:start -->",
+    "zone3End":   "<!-- zone:3:end -->"
+  }
+}
