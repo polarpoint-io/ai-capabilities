@@ -14,14 +14,7 @@
   "scripts": {
     "prepublishOnly": "node bin/agentsmd-validator.js --file bin/agentsmd-validator.js 2>/dev/null || true"
   },
-  "keywords": [
-    "agents",
-    "ai",
-    "validation",
-    "platform-engineering",
-    "gitops",
-    "agentsmd"
-  ],
+  "keywords": ["agents", "ai", "validation", "platform-engineering", "gitops", "agentsmd"],
   "author": "Polarpoint <hello@polarpoint.io>",
   "license": "MIT",
   "engines": {
