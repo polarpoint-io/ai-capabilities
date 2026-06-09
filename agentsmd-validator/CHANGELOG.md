@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/polarpoint-io/ai-capabilities/compare/v1.0.0...v1.0.1) (2026-06-09)
+
+
+### Bug Fixes
+
+* remove registry-url from setup-node to fix EINVALIDNPMTOKEN ([d4c9fa2](https://github.com/polarpoint-io/ai-capabilities/commit/d4c9fa2e006e643e9be60dae59cfb38d673cae24))
+
 # 1.0.0 (2026-06-09)
 
 
