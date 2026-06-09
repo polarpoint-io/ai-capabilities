@@ -22,7 +22,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
+          # No registry-url here — semantic-release writes its own .npmrc
+          # Setting registry-url causes a NODE_AUTH_TOKEN/.npmrc conflict
 
       - name: Install semantic-release
         run: |
