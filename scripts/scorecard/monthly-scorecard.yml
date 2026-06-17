@@ -1,0 +1,87 @@
+# .github/workflows/monthly-scorecard.yml
+# Automated monthly platform health scorecard.
+# Copy this file into your platform repo at .github/workflows/monthly-scorecard.yml
+# and add the required secrets (see env blocks below).
+#
+# This workflow works with both collect_scorecard_data.py (GitHub) and
+# collect_scorecard_data_ado.py (Azure DevOps) — swap the collection step as needed.
+#
+# Required secrets:
+#   GITHUB variant:
+#     PAGERDUTY_TOKEN          — PagerDuty API token (read-only scope)
+#   Azure DevOps variant (replace the "Collect" step):
+#     ADO_PAT                  — Azure DevOps personal access token
+#     ADO_ORG_URL              — https://dev.azure.com/your-org
+#     ADO_PROJECT              — ADO project name
+#     ADO_PLATFORM_AREA        — Area path for platform request work items
+#     PAGERDUTY_TOKEN          — PagerDuty API token
+#   Both variants:
+#     ANTHROPIC_API_KEY        — Anthropic API key for Claude scorecard generation
+#     SLACK_LEADERSHIP_WEBHOOK — Slack incoming webhook URL for leadership channel
+
+name: Monthly Platform Scorecard
+
+on:
+  schedule:
+    - cron: '0 9 1 * *'  # First day of each month at 9am UTC
+  workflow_dispatch:
+
+jobs:
+  generate-scorecard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install PyGithub requests anthropic
+
+      # --- GitHub variant ---
+      - name: Collect current and previous month data (GitHub)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+          PAGERDUTY_TOKEN: ${{ secrets.PAGERDUTY_TOKEN }}
+          PROMETHEUS_URL: ${{ secrets.PROMETHEUS_URL }}  # optional
+          SCORECARD_DATA: /tmp/scorecard-data.json
+        run: python scripts/scorecard/collect_scorecard_data.py
+      # --- End GitHub variant ---
+
+      # --- Azure DevOps variant (uncomment to use instead of above) ---
+      # - name: Collect current and previous month data (Azure DevOps)
+      #   env:
+      #     ADO_PAT: ${{ secrets.ADO_PAT }}
+      #     ADO_ORG_URL: ${{ secrets.ADO_ORG_URL }}
+      #     ADO_PROJECT: ${{ secrets.ADO_PROJECT }}
+      #     ADO_PLATFORM_AREA: ${{ secrets.ADO_PLATFORM_AREA }}
+      #     PAGERDUTY_TOKEN: ${{ secrets.PAGERDUTY_TOKEN }}
+      #     SCORECARD_DATA: /tmp/scorecard-data.json
+      #   run: pip install azure-devops msrest && python scripts/scorecard/collect_scorecard_data_ado.py
+      # --- End Azure DevOps variant ---
+
+      - name: Generate narrative scorecard
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SCORECARD_DATA: /tmp/scorecard-data.json
+          SCORECARD_FILE: /tmp/scorecard.md
+        run: python scripts/scorecard/generate_scorecard.py
+
+      - name: Post to Slack
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_LEADERSHIP_WEBHOOK }}
+          SCORECARD_FILE: /tmp/scorecard.md
+        run: python scripts/scorecard/post_scorecard.py
+
+      - name: Commit scorecard to docs archive
+        run: |
+          mkdir -p docs/scorecards
+          cp /tmp/scorecard.md "docs/scorecards/$(date +%Y-%m).md"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/scorecards/
+          git commit -m "docs: add platform scorecard for $(date +%B\ %Y)" || echo "Nothing to commit"
+          git push

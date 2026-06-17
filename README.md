@@ -149,3 +149,34 @@ python scripts/classify-drift.py my-app /tmp/drift-my-app.diff
 ## License
 
 Apache-2.0
+
+## DORA Metrics Scripts
+
+Runnable scripts for collecting the four DORA metrics from GitHub and PagerDuty.
+Covered in [DevEx Metrics That Matter](https://polarpoint.io/blog/2026/04/07/devex-metrics-that-matter-and-how-to-automate-them/).
+
+| Script | Description |
+|--------|-------------|
+| `scripts/metrics/lead_time.py` | Lead time from first commit to production deployment |
+| `scripts/metrics/change_failure_rate.py` | Change failure rate from GitHub deployments + PagerDuty |
+| `scripts/metrics/mttr.py` | MTTR from PagerDuty incident resolution times |
+| `scripts/metrics/collect_all.py` | Aggregate all four metrics and write to JSON |
+| `scripts/metrics/dora-metrics.yml` | Weekly GitHub Actions workflow template |
+
+**Required env vars:** `GITHUB_TOKEN`, `GITHUB_REPO`, `PAGERDUTY_TOKEN`
+
+## Platform Scorecard Scripts
+
+Monthly scorecard automation — collect six metrics, generate AI narrative, post to Slack.
+Covered in [Platform Scorecards](https://polarpoint.io/blog/2026/04/08/platform-scorecards-automated-monthly-health-snapshots/).
+
+| Script | Description |
+|--------|-------------|
+| `scripts/scorecard/collect_scorecard_data.py` | Collect six metrics via GitHub + PagerDuty |
+| `scripts/scorecard/collect_scorecard_data_ado.py` | Same output, Azure DevOps + PagerDuty variant |
+| `scripts/scorecard/generate_scorecard.py` | AI-generated narrative scorecard (Claude claude-opus-4-6) |
+| `scripts/scorecard/post_scorecard.py` | Post scorecard to Slack |
+| `scripts/scorecard/monthly-scorecard.yml` | First-of-month GitHub Actions workflow template |
+
+**Required env vars:** `GITHUB_TOKEN`, `GITHUB_REPO`, `PAGERDUTY_TOKEN`, `ANTHROPIC_API_KEY`, `SLACK_LEADERSHIP_WEBHOOK`
+

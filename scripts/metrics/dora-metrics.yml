@@ -1,0 +1,43 @@
+# .github/workflows/dora-metrics.yml
+# Weekly DORA metrics collection and Slack summary.
+# Copy this file into your platform repo at .github/workflows/dora-metrics.yml
+# and add the required secrets (see env blocks below).
+#
+# Required secrets:
+#   PAGERDUTY_TOKEN   — PagerDuty API token (read-only scope)
+#   SLACK_PLATFORM_WEBHOOK — Slack incoming webhook URL for #platform-engineering
+
+name: DORA Metrics
+
+on:
+  schedule:
+    - cron: '0 9 * * MON'  # Every Monday at 9am UTC
+  workflow_dispatch:
+
+jobs:
+  collect-metrics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install PyGithub requests
+
+      - name: Collect all four DORA metrics
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+          PAGERDUTY_TOKEN: ${{ secrets.PAGERDUTY_TOKEN }}
+          METRICS_OUTPUT: /tmp/dora-metrics.json
+        run: python scripts/metrics/collect_all.py
+
+      - name: Post weekly summary to Slack
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_PLATFORM_WEBHOOK }}
+          METRICS_FILE: /tmp/dora-metrics.json
+        run: python scripts/metrics/post_weekly_summary.py
