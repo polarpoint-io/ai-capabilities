@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/polarpoint-io/ai-capabilities/compare/v1.0.1...v1.1.0) (2026-06-17)
+
+
+### Features
+
+* **scripts:** add DORA metrics and platform scorecard scripts ([5a0c62f](https://github.com/polarpoint-io/ai-capabilities/commit/5a0c62fefb09e31b04e216db34f9a1ff9886784d))
+
 ## [1.0.1](https://github.com/polarpoint-io/ai-capabilities/compare/v1.0.0...v1.0.1) (2026-06-09)
 
 

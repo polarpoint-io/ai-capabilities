@@ -1,6 +1,6 @@
 {
   "name": "@polarpoint/agentsmd-validator",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Validate AGENTS.md files against a zone-structured schema",
   "main": "lib/validator.js",
   "bin": {
