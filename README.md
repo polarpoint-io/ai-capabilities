@@ -98,6 +98,7 @@ Default three-zone `AGENTS.md` template and `schema.json` for use as the source 
 | `scripts/gitops/new-service.py` | Generate a new service definition interactively |
 | `scripts/kyverno/summarise-violations.py` | Summarise Kyverno PolicyReport violations across the cluster |
 | `scripts/toolhive/install.sh` | Install the ToolHive operator and deploy a starter MCP fleet (OSV + GitHub MCP servers) |
+| `scripts/avoid-ai-tells/SKILL.md` + `lint_ai_tells.py` | Self-editing checklist and linter for stripping LLM writing tells (puffed-up significance claims, "delve/boast/underscore" vocabulary, em-dash overuse, leftover chatbot phrases) from drafts before publishing |
 
 ---
 
