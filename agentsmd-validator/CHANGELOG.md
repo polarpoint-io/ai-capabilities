@@ -1,3 +1,11 @@
+# [1.2.0](https://github.com/polarpoint-io/ai-capabilities/compare/v1.1.0...v1.2.0) (2026-07-28)
+
+
+### Features
+
+* add bmad-golden-path and claude-code-platform-setup examples ([1271324](https://github.com/polarpoint-io/ai-capabilities/commit/12713248ce8a33c5aca9c5f66a27a0e32dd4aace))
+* commit examples and scripts already referenced by README ([39823cb](https://github.com/polarpoint-io/ai-capabilities/commit/39823cbc2aed6ea0e1fcdc4bb2d92c999a87a060))
+
 # [1.1.0](https://github.com/polarpoint-io/ai-capabilities/compare/v1.0.1...v1.1.0) (2026-06-17)
 
 
