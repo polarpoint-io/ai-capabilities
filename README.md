@@ -76,6 +76,8 @@ Default three-zone `AGENTS.md` template and `schema.json` for use as the source 
 | `kyverno-policies.md` | Kyverno ClusterPolicies synced via ArgoCD — validate, mutate, generate | [GitOps Policy-as-Code with Kyverno](https://www.polarpoint.io/blog/2026/04/07/gitops-policy-as-code-with-argo-cd-kyverno/) |
 | `gemma-edge-agent.md` | Gemma 4 agentic workloads running locally via Ollama | [Gemma 4 at the Edge](https://www.polarpoint.io/blog/2026/04/07/gemma-4-at-the-edge-agentic-skills-in-production/) |
 | `karpathy-claude-md.md` | AGENTS.md routing map with Tier 1/2/3 approval model and platform engineering extensions to Karpathy's CLAUDE.md rules | [The Four Rules That Make AI Agents Actually Trustworthy](https://www.polarpoint.io/blog/) |
+| `bmad-golden-path.md` | BMAD spec-first build: PRD → architecture → GitOps YAML → compliance check, applied to a model-serving golden path | [BMAD in Practice: Two Specs, One Method, Zero Blank YAML Files](https://www.polarpoint.io/blog/2026/07/28/bmad-in-practice-two-specs-one-method-zero-blank-yaml-files/) |
+| `claude-code-platform-setup.md` | Claude Code starter setup for platform engineers: context budget, first-hour checklist, token discipline | [Claude Code for Platform Engineers](https://www.polarpoint.io/blog/2026/07/29/claude-code-for-platform-engineers-the-setup-that-doesnt-burn-tokens/) |
 
 ---
 
