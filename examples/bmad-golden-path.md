@@ -4,6 +4,8 @@
 
 Related blog post: [BMAD in Practice: Two Specs, One Method, Zero Blank YAML Files](https://www.polarpoint.io/blog/2026/07/28/bmad-in-practice-two-specs-one-method-zero-blank-yaml-files/)
 
+See also: [the BMAD method itself](https://www.polarpoint.io/blog/2026/06/15/spec-first-gitops-second-the-platform-engineers-guide-to-bmad/) · [why the golden path matters (the 66/7 gap)](https://www.polarpoint.io/blog/2026/07/26/66-of-genai-runs-on-kubernetes-only-7-can-ship-daily/) · [the runbook loop this extends](https://www.polarpoint.io/blog/2026/06/28/holmesgpt-knows-what-your-runbooks-are-missing-heres-how-to-fix-it/)
+
 ## Problem
 
 Golden paths make promises to other teams, but most get built YAML-first: the architecture decisions happen implicitly, one resource at a time, with no artifact forcing questions like "who gets paged when a model passes canary but fails the eval gate?" The decisions that were never made explicitly become the 2am incidents.

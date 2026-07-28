@@ -4,6 +4,8 @@
 
 Related blog post: [Claude Code for Platform Engineers: The Setup That Doesn't Burn Tokens](https://www.polarpoint.io/blog/2026/07/29/claude-code-for-platform-engineers-the-setup-that-doesnt-burn-tokens/)
 
+See also: [Karpathy's four rules](https://www.polarpoint.io/blog/2026/05/24/the-four-rules-that-make-ai-agents-actually-trustworthy/) · [rolling AGENTS.md out to 40 repos](https://www.polarpoint.io/blog/2026/06/10/your-agentsmd-is-great-now-how-do-you-roll-it-out-to-40-repos/) · [the 6 repos deep-dive](https://www.polarpoint.io/blog/2026/05/26/the-6-github-repos-that-are-redefining-how-ai-agents-think-act-and-talk-to-each-other/)
+
 ## Problem
 
 Out of the box, Claude Code has no repo context and expensive habits: re-exploring the same repo structure every session, carrying schema overhead from idle plugins and MCP servers, and producing prose nobody reads. The fix is deciding deliberately what loads always, what loads on demand, and what never loads.
