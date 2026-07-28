@@ -1,0 +1,63 @@
+# gateway-config.yaml — MCP Gateway service account configuration
+#
+# Each service account has a key_hash (SHA-256 of the API key),
+# an allowed_tools list, an optional denied_tools list, and an optional
+# require_confirmation list for destructive operations.
+#
+# Generate a key hash:
+#   echo -n "your-api-key-here" | sha256sum
+#
+# Start the gateway:
+#   MCP_GATEWAY_SECRET=<secret> python scripts/mcp/mcp-gateway.py \
+#     --config scripts/mcp/gateway-config.yaml --port 8080
+
+service_accounts:
+  - name: ci-pipeline
+    # Replace with: echo -n "<api-key>" | sha256sum
+    key_hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    allowed_tools:
+      - argocd_get_app
+      - argocd_sync_app
+      - argocd_list_apps
+      - kubectl_get
+      - kubectl_describe
+    denied_tools:
+      - kubectl_delete
+      - argocd_delete_app
+
+  - name: on-call-engineer
+    key_hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    allowed_tools:
+      - "*"  # all tools
+    require_confirmation:
+      - kubectl_delete
+      - argocd_delete_app
+      - kubectl_scale
+
+  - name: platform-agent
+    key_hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    allowed_tools:
+      - argocd_get_app
+      - argocd_sync_app
+      - argocd_list_apps
+      - kubectl_get
+      - kubectl_describe
+      - kubectl_logs
+      - kubectl_scale
+    denied_tools:
+      - kubectl_delete
+      - argocd_delete_app
+
+  - name: readonly-dashboard
+    key_hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    allowed_tools:
+      - argocd_get_app
+      - argocd_list_apps
+      - kubectl_get
+      - kubectl_describe
+
+rate_limit:
+  rps: 10         # requests per second per caller
+  burst: 20       # burst allowance
+
+audit_log: /var/log/mcp-audit.jsonl

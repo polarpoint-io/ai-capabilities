@@ -29,3 +29,24 @@ Deliver platform work predictably and safely using repeatable workflows.
 - Plan: `/examples/*.md`
 - Scripts: `/scripts/*`
 - Metrics: `/scripts/metrics/*`
+
+## Available examples
+
+| Example | Goal |
+|---------|------|
+| `platform-release-checklist.md` | Safe, gate-based release workflow |
+| `incident-runbook.md` | Standardised incident response |
+| `incident-triage.md` | AI-assisted context gathering for incidents |
+| `infra-bootstrap.md` | New environment bootstrap |
+| `slo-review.md` | Monthly SLO review with action items |
+| `sprint-review-deck.md` | Marp deck from metrics |
+| `drift-detection.md` | GitOps drift classification + fix PRs |
+| `cost-monitoring.md` | Cloud cost anomaly detection + fix PRs |
+| `policy-gate.md` | OPA/Kyverno validation for agent changes |
+| `dora-metrics.md` | DORA metrics collection and reporting |
+
+## Key scripts
+
+- `scripts/metrics/collect-dora.py` — all four DORA metrics from GitHub + PagerDuty
+- `scripts/detect-drift.sh` — query ArgoCD for OutOfSync Applications
+- `scripts/classify-drift.py` — AI classification of kubectl diff output
