@@ -6,16 +6,31 @@ Companion repository for the [Polarpoint blog](https://www.polarpoint.io/blog/) 
 
 This repo contains:
 - Installable CLI tools for managing AI agents at scale
+- Claude Agent Skills for writing and presentation workflows
 - Platform standards templates and schema
 - Example `AGENTS.md` patterns for platform workflows
 - Sample scripts to collect metrics and generate outputs
 - Walkthrough examples you can run locally
 
+## Repository layout
+
+| Path | What lives here |
+|------|-----------------|
+| `packages/` | Standalone, independently versioned tools published elsewhere (currently: `agentsmd-validator`, published to npm). Each has its own `package.json`/release lifecycle — see [Tools](#tools). |
+| `skills/` | [Claude Agent Skills](https://www.polarpoint.io/blog/) — `SKILL.md`-based, installed into Claude Code/Cowork rather than run directly. See [Skills](#skills). |
+| `scripts/` | One-off automation: GitOps helpers, metrics/scorecard collectors, the MCP gateway, Marp deck pipeline, OS setup scripts. Run directly, not installed. |
+| `examples/` | Blog-post companion write-ups, plus a couple of runnable mini-projects (`graph-engineering/`, `obsidian-graph-retrieval/`) with their own sample data. |
+| `templates/` | Copy-and-adapt templates (`CLAUDE.md` routing map, a GitHub issue template). |
+| `platform-standards/` | The `AGENTS.md` zone schema and default template that `agentsmd-validator` and `drift-detector` both validate against. |
+| `agents/` | The `AGENTS.md` for this repo itself. |
+
+Packages get their own release (`.releaserc.json` + `.github/workflows/release.yml`, scoped to `packages/agentsmd-validator/**` so unrelated commits elsewhere in the repo don't trigger an npm publish). Skills and scripts don't — they're versioned by the repo's own git history.
+
 ---
 
 ## Tools
 
-### [`agentsmd-validator`](./agentsmd-validator) · [![npm](https://img.shields.io/npm/v/@polarpoint/agentsmd-validator)](https://www.npmjs.com/package/@polarpoint/agentsmd-validator)
+### [`agentsmd-validator`](./packages/agentsmd-validator) · [![npm](https://img.shields.io/npm/v/@polarpoint/agentsmd-validator)](https://www.npmjs.com/package/@polarpoint/agentsmd-validator)
 
 Zero-dependency Node.js CLI that validates zone-structured `AGENTS.md` files against a schema. Checks zone markers, required sections, executable commands in test instructions, and Zone 1 drift.
 
@@ -40,6 +55,17 @@ python drift-detector/detect-drift.py \
 ### [`platform-standards`](./platform-standards)
 
 Default three-zone `AGENTS.md` template and `schema.json` for use as the source of truth in your platform-standards repo.
+
+---
+
+## Skills
+
+[Claude Agent Skills](https://www.polarpoint.io/blog/) — install into Claude Code or Cowork rather than run directly.
+
+| Skill | What it does |
+|-------|-------------|
+| [`skills/avoid-ai-tells`](./skills/avoid-ai-tells) | Self-editing checklist and linter for stripping LLM writing tells (puffed-up significance claims, "delve/boast/underscore" vocabulary, em-dash overuse, leftover chatbot phrases) from drafts before publishing |
+| [`skills/pyramid-and-slides`](./skills/pyramid-and-slides) | Structures blog posts/articles/guides with Minto's full Pyramid Principle (governing thought, vertical Q&A logic, MECE, SCQA), then derives a companion deck from the same argument — as a Slides artifact, pptx, Marp Markdown (using this repo's `scripts/marp/` pipeline), or `frontend-slides` HTML — applying TED's slide-deck rules with 2026 caveats |
 
 ---
 
@@ -100,8 +126,6 @@ Default three-zone `AGENTS.md` template and `schema.json` for use as the source 
 | `scripts/gitops/new-service.py` | Generate a new service definition interactively |
 | `scripts/kyverno/summarise-violations.py` | Summarise Kyverno PolicyReport violations across the cluster |
 | `scripts/toolhive/install.sh` | Install the ToolHive operator and deploy a starter MCP fleet (OSV + GitHub MCP servers) |
-| `scripts/avoid-ai-tells/SKILL.md` + `lint_ai_tells.py` | Self-editing checklist and linter for stripping LLM writing tells (puffed-up significance claims, "delve/boast/underscore" vocabulary, em-dash overuse, leftover chatbot phrases) from drafts before publishing |
-| `scripts/pyramid-and-slides/SKILL.md` | Structures blog posts/articles/guides with Minto's full Pyramid Principle (governing thought, vertical Q&A logic, MECE, SCQA), then derives a companion deck from the same argument — as a Slides artifact, pptx, Marp Markdown (using this repo's `scripts/marp/` pipeline), or `frontend-slides` HTML — applying TED's slide-deck rules with 2026 caveats |
 
 ---
 

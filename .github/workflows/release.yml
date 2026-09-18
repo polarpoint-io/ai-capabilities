@@ -3,6 +3,10 @@ name: Release
 on:
   push:
     branches: [main]
+    paths:
+      - 'packages/agentsmd-validator/**'
+      - '.releaserc.json'
+      - '.github/workflows/release.yml'
 
 jobs:
   release:

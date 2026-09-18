@@ -34,9 +34,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/polarpoint-io/ai-capabilities.git",
-    "directory": "agentsmd-validator"
+    "directory": "packages/agentsmd-validator"
   },
-  "homepage": "https://github.com/polarpoint-io/ai-capabilities/tree/main/agentsmd-validator#readme",
+  "homepage": "https://github.com/polarpoint-io/ai-capabilities/tree/main/packages/agentsmd-validator#readme",
   "bugs": {
     "url": "https://github.com/polarpoint-io/ai-capabilities/issues"
   }
