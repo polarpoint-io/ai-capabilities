@@ -29,6 +29,12 @@ jobs:
           # No registry-url here — semantic-release writes its own .npmrc
           # Setting registry-url causes a NODE_AUTH_TOKEN/.npmrc conflict
 
+      # npm trusted publishing (OIDC) requires npm CLI >= 11.5.1. Node 20's
+      # bundled npm (10.x) predates that, so it must be upgraded explicitly
+      # before semantic-release/npm tries to authenticate.
+      - name: Update npm
+        run: npm install -g npm@latest
+
       - name: Install semantic-release
         run: |
           npm install -g \
