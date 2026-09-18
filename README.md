@@ -101,6 +101,7 @@ Default three-zone `AGENTS.md` template and `schema.json` for use as the source 
 | `scripts/kyverno/summarise-violations.py` | Summarise Kyverno PolicyReport violations across the cluster |
 | `scripts/toolhive/install.sh` | Install the ToolHive operator and deploy a starter MCP fleet (OSV + GitHub MCP servers) |
 | `scripts/avoid-ai-tells/SKILL.md` + `lint_ai_tells.py` | Self-editing checklist and linter for stripping LLM writing tells (puffed-up significance claims, "delve/boast/underscore" vocabulary, em-dash overuse, leftover chatbot phrases) from drafts before publishing |
+| `scripts/pyramid-and-slides/SKILL.md` | Structures blog posts/articles/guides with Minto's full Pyramid Principle (governing thought, vertical Q&A logic, MECE, SCQA), then derives a companion deck from the same argument — as a Slides artifact, pptx, Marp Markdown (using this repo's `scripts/marp/` pipeline), or `frontend-slides` HTML — applying TED's slide-deck rules with 2026 caveats |
 
 ---
 
