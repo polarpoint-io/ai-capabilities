@@ -1,3 +1,18 @@
+# [1.3.0](https://github.com/polarpoint-io/ai-capabilities/compare/v1.2.0...v1.3.0) (2026-09-19)
+
+
+### Bug Fixes
+
+* **ci:** switch npm publish to trusted publishing (OIDC) ([017e438](https://github.com/polarpoint-io/ai-capabilities/commit/017e438cd0d56512a068b21a61af6f70e006547f))
+* **ci:** upgrade npm CLI so trusted publishing OIDC actually works ([d9573f0](https://github.com/polarpoint-io/ai-capabilities/commit/d9573f0925124927edbade2f2378d3275cdf7b9c))
+* use node 24 ([8fe5812](https://github.com/polarpoint-io/ai-capabilities/commit/8fe5812be7cdffe8275c31e64f6fb6f8c093099c))
+
+
+### Features
+
+* graph example ([ff3a2bc](https://github.com/polarpoint-io/ai-capabilities/commit/ff3a2bcd2b84ba7a05b7eaf79d75174c2d6dbb3a))
+* **skills:** add pyramid-and-slides skill ([dd1cc29](https://github.com/polarpoint-io/ai-capabilities/commit/dd1cc290ef982277fd2b7a85aa6e47605ea2d97e))
+
 # [1.2.0](https://github.com/polarpoint-io/ai-capabilities/compare/v1.1.0...v1.2.0) (2026-07-28)
 
 
